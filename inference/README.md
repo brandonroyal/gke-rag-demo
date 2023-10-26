@@ -1,13 +1,27 @@
 # Inference Demo
 
+## Steps
 
-Stand-Up GKE Clusters
+1. View empty cluster and node pools in Pantheon. Inspect node configuration
+
+2. Deploy llama-2 text-generation-interface
 ```bash
-PROJECT_ID="broyal-llama-demo"
-# create a cluster
-gcloud container --project "$PROJECT_ID" clusters create-auto "autopilot-cluster-1" --region "us-central1" --release-channel "regular" --network "projects/$PROJECT_ID/global/networks/default" --subnetwork "projects/$PROJECT_ID/regions/us-central1/subnetworks/default" --cluster-ipv4-cidr "/17" --services-ipv4-cidr "/22"
-
+kubectl apply -f text-generation-interface.yaml
 ```
+```bash
+kubectl describe deployment/llama-2-13b
+```
+3. Wait for deployment to become healthy (3-4 mins to provision). Port forward to do initial testing
+```bash
+kubectl describe deployment/llama-2-13b
+```
+
+```bash
+kubectl port-forward deployment/llama-2-13b 8080:8080
+```
+
+4. 
+
 
 Connect to Cluster
 ```bash
