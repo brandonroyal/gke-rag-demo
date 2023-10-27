@@ -1,0 +1,4 @@
+{
+        "inputs": "[INST] <<SYS>>\nYou are a helpful, respectful and honest assistant. \n<</SYS>>\nHow to deploy a container on K8s?[/INST]",
+        "parameters": {"max_new_tokens": 400}
+}

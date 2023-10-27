@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llama-2-7b
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: llama-2-7b
+  template:
+    metadata:
+      labels:
+        app: llama-2-7b
+        server: text-generation-interface
+    spec:
+      containers:
+      - name: llama-2-7b
+        image: ghcr.io/huggingface/text-generation-inference:1.0.3
+        resources:
+          limits:
+            nvidia.com/gpu: "1"
+        env:
+        - name: MODEL_ID
+          value: meta-llama/Llama-2-7b-chat-hf
+        - name: NUM_SHARD
+          value: "1"
+        - name: PORT 
+          value: "8080"
+        - name: QUANTIZE
+          value: bitsandbytes-nf4
+        - name: HUGGING_FACE_HUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: l4-demo
+              key: HF_TOKEN
+        volumeMounts:
+          - mountPath: /dev/shm
+            name: dshm
+          - mountPath: /data
+            name: data
+      volumes:
+         - name: dshm
+           emptyDir:
+              medium: Memory
+         - name: data
+           hostPath:
+            path: /mnt/stateful_partition/kube-ephemeral-ssd/llama-data
+      nodeSelector:
+        cloud.google.com/gke-accelerator: nvidia-l4
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: llama-2-7b
+spec:
+  selector:
+    app: llama-2-7b
+  ports:
+  - protocol: TCP
+    port: 8080
+    targetPort: 8080
+  type: LoadBalancer
