@@ -1,0 +1,42 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: llm-ingress
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /*
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: llama-2-13b-service
+            port:
+              number: 8080
+      - path: /llama-2-70b
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: llama-2-70b-service
+            port:
+              number: 8080
+      - path: /mistral-7b
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: mistral-7b-service
+            port:
+              number: 8080
+# ---
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: llm-ingress
+#   # annotations:
+#   #   kubernetes.io/ingress.global-static-ip-name: "llama-2-7b-static-ip"
+# spec:
+#   defaultBackend:
+#     service:
+#       name: llama-2-7b-service
+#       port:
+#         number: 8080

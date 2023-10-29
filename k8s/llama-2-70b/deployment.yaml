@@ -19,6 +19,21 @@ spec:
         resources:
           limits:
             nvidia.com/gpu: "2"
+        ports:
+        - name: server-port
+          containerPort: 8080
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: server-port
+          failureThreshold: 1
+          periodSeconds: 10
+        startupProbe:
+          httpGet:
+            path: /health
+            port: server-port
+          failureThreshold: 30
+          periodSeconds: 10
         env:
         - name: MODEL_ID
           value: meta-llama/Llama-2-70b-chat-hf
