@@ -1,0 +1,98 @@
+import os, json
+from google.cloud import pubsub
+from google.oauth2 import service_account
+import ast
+import os, json
+from langchain.document_loaders import WebBaseLoader
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.embeddings import HuggingFaceEmbeddings
+from langchain.vectorstores.pgvector import PGVector
+from google.cloud import pubsub_v1
+from google.oauth2 import service_account
+from kubernetes import client, config
+
+PROJECT_ID = 'broyal-llama-demo'
+if os.getenv("DEBUG"):
+    f = open("./../.svc", "r")
+    secret = json.loads(f.read())
+else:
+    config.load_kube_config()
+    v1 = client.CoreV1Api()
+    secret_str = v1.read_namespaced_secret("pubsub-svc", "default")
+
+credentials = service_account.Credentials.from_service_account_info(secret)
+subscriber = pubsub.SubscriberClient(credentials=credentials)
+subscription_path = subscriber.subscription_path(PROJECT_ID, 'kubernetes_concepts_subscription')
+
+def process_data(urls):
+    print('start: processing data')
+    loader = WebBaseLoader(urls)
+    documents = loader.load()
+
+    # Chunk all the kubernetes concept documents
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=20)
+    docs = text_splitter.split_documents(documents)
+    print("%s chunks in %s pages" % (len(docs), len(documents)))
+    return docs
+
+
+# Load sentence transformer embeddings
+def load_embeddings():
+    print('start: loading embeddings')
+    model_name = "sentence-transformers/all-mpnet-base-v2"
+    model_kwargs = {"device":"cpu"} # use {"device":"cuda"} for distributed embeddings
+
+    return HuggingFaceEmbeddings(model_name=model_name, model_kwargs=model_kwargs)
+
+
+def get_connection_string():
+    print('start: getting connections')
+    return PGVector.connection_string_from_db_params(
+        driver=os.environ.get("PGVECTOR_DRIVER", "psycopg2"),
+        host=os.environ.get("PGVECTOR_HOST", "localhost"),
+        port=int(os.environ.get("PGVECTOR_PORT", "5432")),
+        database=os.environ.get("PGVECTOR_DATABASE", "postgres"),
+        user=os.environ.get("PGVECTOR_USER", "postgres"),
+        password=os.environ.get("PGVECTOR_PASSWORD", "secretpassword"),
+    )
+
+while True:
+  response = subscriber.pull(
+    request={
+      "subscription": subscription_path,
+      "max_messages": 5,
+    }
+  )
+
+  if not response.received_messages:
+    print('❌ no messages in pub/sub')
+    break
+  
+  urls = []
+  for msg in response.received_messages:
+    print(msg.message)
+    url = msg.message.data.decode("utf-8")
+    urls.append(url)
+    # message_data = ast.literal_eval(msg.message.data.decode('utf-8'))
+    msg
+  print("starting index of {urls}".format(urls=urls))
+  docs = process_data(urls)
+  embeddings = load_embeddings()
+  print('connecting to pgVector store')
+  db = PGVector(
+      collection_name="kubernetes_concepts",
+      connection_string=get_connection_string(),
+      embedding_function=embeddings,
+  )
+  print('adding documents')
+  db.add_documents(docs)
+
+  ack_ids = [msg.ack_id for msg in response.received_messages]
+  subscriber.acknowledge(
+    request={
+      "subscription": subscription_path,
+      "ack_ids": ack_ids,
+    }
+  )
+
+print('🏁 No more messages left in the queue. Shutting down...')

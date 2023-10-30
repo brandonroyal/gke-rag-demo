@@ -179,7 +179,18 @@ load testing
 
 ```
 
+## Container Building
+```bash
+export PROJECT_ID=$(gcloud config get project)
+export REPOSITORY=llama-demos
+export IMAGE_NAME=indexer
 
+gcloud builds submit
+```
+
+
+```bash
+gcloud 
 
 Credits:
 * text-generation-inference - huggingface

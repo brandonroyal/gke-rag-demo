@@ -1,0 +1,3 @@
+https://kubernetes.io/docs/concepts/workloads/controllers/
+https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
+https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
