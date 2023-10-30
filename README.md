@@ -51,9 +51,7 @@ kubectl apply -f k8s/llama-2-13b/service.yaml,k8s/llama-2-70b/service.yaml,k8s/m
 *Llama 2* Prompt
 ```json
 {
-  "inputs": "[INST] <<SYS>>\nYou are a helpful, respectful and honest assistant who is an expert in explaining Kubernetes concepts. \
-        Always answer as helpfully as possible, while being safe.  Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. \
-        If a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct.  Try to keep your response to 200 words or less.\n<</SYS>>\nWhat is a deployment?[/INST]",
+  "inputs": "[INST] <<SYS>>\nYou are a helpful, respectful and honest assistant who is an expert in explaining Kubernetes concepts. Always answer as helpfully as possible, while being safe.  Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. If a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct.  Try to keep your response to 200 words or less.\n<</SYS>>\nWhat is a deployment?[/INST]",
   "parameters": {
     "best_of": 1,
     "do_sample": true,
@@ -73,9 +71,7 @@ kubectl apply -f k8s/llama-2-13b/service.yaml,k8s/llama-2-70b/service.yaml,k8s/m
 *Mistral Prompt
 ```json
 {
-  "inputs": "[INST] You are a helpful, respectful and honest assistant who is an expert in explaining Kubernetes concepts. \
-        Always answer as helpfully as possible, while being safe.  Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. \
-        If a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. Try to keep your response to 200 words or less. [/INST] {message}",
+  "inputs": "[INST] You are a helpful, respectful and honest assistant who is an expert in explaining Kubernetes concepts. Always answer as helpfully as possible, while being safe.  Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. If a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct.  Try to keep your response to 100 words or less. What is a deployment?[/INST]",
   "parameters": {
     "best_of": 1,
     "do_sample": true,
