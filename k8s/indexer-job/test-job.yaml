@@ -1,20 +1,22 @@
-# gcr.io/broyal-llama-demo/llama-demo/indexer
-
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: indexer-job
+  name: test-job
   labels:
     job: "indexer"
 spec:
   template:
     spec:
       containers:
-      - name: indexer-job
-        image: gcr.io/broyal-llama-demo/llama-demo/indexer:0.1.7
-        resources:
-          limits:
-            nvidia.com/gpu: "1"
+      - name: test-job
+        image: busybox
+        command:
+        - ls
+        - "-l"
+        - "/etc/secret-volume"
+        # resources:
+        #   limits:
+        #     nvidia.com/gpu: "1"
         env:
           - name: PGVECTOR_HOST
             value: "postgres"
@@ -34,8 +36,8 @@ spec:
             - key: pubsub-svc.json
               path: pubsub-svc.json
       restartPolicy: OnFailure
-      nodeSelector:
-        cloud.google.com/gke-accelerator: nvidia-l4
+      # nodeSelector:
+      #   cloud.google.com/gke-accelerator: nvidia-l4
       
   parallelism: 3
 

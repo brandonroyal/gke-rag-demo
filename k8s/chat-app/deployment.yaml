@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chat-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: chat-app
+  template:
+    metadata:
+      labels:
+        app: chat-app
+    spec:
+      containers:
+      - name: chat-app
+        image: gcr.io/broyal-llama-demo/llama-demo/chat-app:0.1.4
+        resources:
+          limits:
+            nvidia.com/gpu: "1"
+        ports:
+        - name: server-port
+          containerPort: 7860
+        env:
+        - name: PGVECTOR_HOST
+          value: "postgres-service"
+        - name: TGI_HOSTNAME
+          value: "mistral-7b-service"
+        - name: TGI_PORT
+          value: "80"
+        - name: HOSTNAME
+          value: "chat-app-service.default.svc.cluster.local"
+        - name: MODEL_NAME
+          value: "Mistral 7B"
+        - name: SENTENCE_TRANSFORMERS_HOME
+          value: "/data"
+        volumeMounts:
+          - mountPath: /data
+            name: st-data
+      volumes:
+         - name: st-data
+           hostPath:
+            path: /mnt/stateful_partition/kube-ephemeral-ssd/sentence-transformers
+      nodeSelector:
+        cloud.google.com/gke-accelerator: nvidia-l4

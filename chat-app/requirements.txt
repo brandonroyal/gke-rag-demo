@@ -1,2 +1,5 @@
 gradio
-huggingface
+langchain
+huggingface_hub
+sentence_transformers
+psycopg2-binary

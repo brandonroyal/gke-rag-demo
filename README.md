@@ -89,6 +89,10 @@ kubectl apply -f k8s/llama-2-13b/service.yaml,k8s/llama-2-70b/service.yaml,k8s/m
 }
 ```
 
+## Demo 2
+
+
+
 ## Pre-Demo Steps
 
 1. Choose your region and set your project:

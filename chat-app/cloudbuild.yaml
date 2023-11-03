@@ -1,4 +1,4 @@
 steps:
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'gcr.io/$PROJECT_ID/$REPOSITORY/$IMAGE_NAME', '.']
-images: ['gcr.io/$PROJECT_ID/$REPOSITORY/$IMAGE_NAME']
+  args: ['build', '-t', 'gcr.io/$PROJECT_ID/llama-demo/chat-app:0.1.5', '.']
+images: ['gcr.io/$PROJECT_ID/llama-demo/chat-app:0.1.5']
