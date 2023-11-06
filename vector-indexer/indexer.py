@@ -1,19 +1,21 @@
-import os, json
-from google.cloud import pubsub
-from google.oauth2 import service_account
+print('starting vector indexer...')
+
 import ast
-import os, json
+import os, json, io
+import langchain
+from contextlib import redirect_stdout
 from langchain.document_loaders import WebBaseLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.vectorstores.pgvector import PGVector
-from google.cloud import pubsub_v1
+from google.cloud import pubsub
 from google.oauth2 import service_account
-from kubernetes import client, config
+
+print('langchain: {version}'.format(version=langchain.__version__))
 
 PROJECT_ID = 'broyal-llama-demo'
 if os.getenv("DEBUG"):
-    f = open("./../pubsub-svc.json", "r")
+    f = open("./.pubsub-svc/pubsub-svc.json", "r")
     secret = json.loads(f.read())
 else:
     f = open("/etc/secret-volume/pubsub-svc.json", "r")
@@ -40,8 +42,8 @@ def load_embeddings():
     print('start: loading embeddings')
     model_name = "sentence-transformers/all-mpnet-base-v2"
     model_kwargs = {"device":"cpu"} # use {"device":"cuda"} for distributed embeddings
-
-    return HuggingFaceEmbeddings(model_name=model_name, model_kwargs=model_kwargs)
+    with redirect_stdout(io.StringIO()) as f:
+      return HuggingFaceEmbeddings(model_name=model_name, model_kwargs=model_kwargs)
 
 def test_connection():
   import socket
@@ -61,12 +63,13 @@ def get_connection_string():
 
 test_connection()
 embeddings = load_embeddings()
-# print('connecting to pgVector store')
-# db = PGVector.from_existing_index(
-#     collection_name=os.getenv("COLLECTION_NAME","kubernetes_concepts"),
-#     connection_string=get_connection_string(),
-#     embedding=embeddings,
-# )
+print('connecting to pgVector store')
+
+db = PGVector.from_existing_index(
+    collection_name=os.getenv("COLLECTION_NAME","kubernetes_concepts"),
+    connection_string=get_connection_string(),
+    embedding=embeddings,
+)
 
 while True:
   response = subscriber.pull(
@@ -77,7 +80,7 @@ while True:
   )
 
   if not response.received_messages:
-    print('❌ no messages in pub/sub')
+    print('❌ no documents in pub/sub topic')
     break
   
   urls = []
@@ -92,13 +95,6 @@ while True:
 
   collection_name=os.getenv("COLLECTION_NAME","kubernetes_concepts")
   print('connectingn to vectordb. adding documents to {collection_name}'.format(collection_name=collection_name))
-  # db = PGVector.from_documents(
-  #   embedding=embeddings,
-  #   documents=docs,
-  #   collection_name=collection_name,
-  #   connection_string=get_connection_string(),
-  # )
-  # db.add_documents(docs)
 
   ack_ids = [msg.ack_id for msg in response.received_messages]
   subscriber.acknowledge(
@@ -108,4 +104,4 @@ while True:
     }
   )
 
-print('🏁 No more messages left in the queue. Shutting down...')
+print('🏁 No more documents left in the queue. Shutting down...')

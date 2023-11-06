@@ -1,3 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-conf
+  namespace: nginx-ingress
+data:
+  nginx.conf: |-
+    user nginx;
+    worker_processes  10;
+    events {
+      worker_connections  10240;
+    }
+    http {
+      server {
+          listen       80;
+          server_name  localhost;
+          location / {
+            root   /usr/share/nginx/html; #Change this line
+            index  index.html index.htm;
+        }
+      }
+    }
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -37,9 +60,27 @@ spec:
         volumeMounts:
           - mountPath: /data
             name: st-data
+      - name: nginx
+        image: nginx
+        ports:
+        - containerPort: 80
+        securityContext:
+          allowPrivilegeEscalation: false
+          #runAsUser: 0
+        volumeMounts:
+            - name: nginx-conf
+              mountPath: /etc/nginx
+              #subPath: nginx.conf
+              readOnly: true
       volumes:
          - name: st-data
            hostPath:
             path: /mnt/stateful_partition/kube-ephemeral-ssd/sentence-transformers
+         - name: nginx-conf
+           configMap:
+              name: nginx-conf
+              items:
+                - key: nginx.conf
+                  path: nginx.conf
       nodeSelector:
         cloud.google.com/gke-accelerator: nvidia-l4
