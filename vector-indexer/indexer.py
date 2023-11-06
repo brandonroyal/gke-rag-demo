@@ -24,6 +24,7 @@ else:
 credentials = service_account.Credentials.from_service_account_info(secret)
 subscriber = pubsub.SubscriberClient(credentials=credentials)
 subscription_path = subscriber.subscription_path(PROJECT_ID, os.getenv("PUBSUB_SUBSCRIPTION",'kubernetes_concepts_subscription'))
+print('connecting to pubsub subscription: {subscription}'.format(subscription=subscription_path))
 
 def process_data(urls):
     print('start: processing data')

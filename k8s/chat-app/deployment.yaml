@@ -2,7 +2,6 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: nginx-conf
-  namespace: nginx-ingress
 data:
   nginx.conf: |-
     user nginx;
@@ -15,8 +14,17 @@ data:
           listen       80;
           server_name  localhost;
           location / {
-            root   /usr/share/nginx/html; #Change this line
-            index  index.html index.htm;
+            proxy_pass          http://localhost:7860;
+            proxy_set_header    Host              $host;
+            proxy_set_header    X-Real-IP         $remote_addr;
+            proxy_set_header    X-Forwarded-For   $proxy_add_x_forwarded_for;
+            proxy_set_header    X-Client-Verify   SUCCESS;
+            proxy_set_header    X-Client-DN       $ssl_client_s_dn;
+            proxy_set_header    X-SSL-Subject     $ssl_client_s_dn;
+            proxy_set_header    X-SSL-Issuer      $ssl_client_i_dn;
+            proxy_set_header    X-Forwarded-Proto http;
+            proxy_read_timeout 1800;
+            proxy_connect_timeout 1800;
         }
       }
     }
@@ -37,7 +45,7 @@ spec:
     spec:
       containers:
       - name: chat-app
-        image: gcr.io/broyal-llama-demo/llama-demo/chat-app:0.1.4
+        image: gcr.io/broyal-llama-demo/llama-demo/chat-app:0.1.7
         resources:
           limits:
             nvidia.com/gpu: "1"
@@ -48,7 +56,7 @@ spec:
         - name: PGVECTOR_HOST
           value: "postgres-service"
         - name: TGI_HOSTNAME
-          value: "mistral-7b-service"
+          value: "mistral-7b-nf4-service"
         - name: TGI_PORT
           value: "80"
         - name: HOSTNAME
@@ -60,7 +68,7 @@ spec:
         volumeMounts:
           - mountPath: /data
             name: st-data
-      - name: nginx
+      - name: chat-app-proxy
         image: nginx
         ports:
         - containerPort: 80

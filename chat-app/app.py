@@ -166,4 +166,4 @@ gr.ChatInterface(
     retry_btn="Retry",
     undo_btn="Undo",
     clear_btn="Clear",
-).queue().launch(share=True,server_port=7860,server_host=os.environ.get("HOSTNAME","localhost"))
+).queue().launch(share=True,server_port=7860)

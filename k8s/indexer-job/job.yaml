@@ -11,17 +11,17 @@ spec:
     spec:
       containers:
       - name: indexer-job
-        image: gcr.io/broyal-llama-demo/llama-demo/indexer:0.1.7
+        image: gcr.io/broyal-llama-demo/llama-demo/indexer:0.1.9
         resources:
           limits:
             nvidia.com/gpu: "1"
         env:
           - name: PGVECTOR_HOST
-            value: "postgres"
+            value: "postgres-service"
           - name: PUBSUB_SUBSCRIPTION
-            value: "kubernetes_concepts_subscription"
+            value: "kubernetes_concepts-2"
           - name: COLLECTION_NAME
-            value: "kubernetes_concepts"
+            value: "kubernetes_concepts-2"
         volumeMounts:
         - name: secret-volume
           readOnly: true
@@ -38,5 +38,3 @@ spec:
         cloud.google.com/gke-accelerator: nvidia-l4
       
   parallelism: 3
-
-        

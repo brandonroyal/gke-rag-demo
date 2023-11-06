@@ -5,5 +5,5 @@ input="./data/k8s-urls.txt"
 while IFS= read -r line
 do
   echo "publishing $line"
-  gcloud pubsub topics publish kubernetes_concepts --message="$line"
+  gcloud pubsub topics publish kubernetes_concepts-2 --message="$line"
 done < "$input"
