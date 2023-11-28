@@ -1,5 +1,5 @@
 kubectl apply -f ./k8s/indexer-job
-kubectl describe job/indexer-job
+# kubectl describe job/indexer-job
 echo "---"
 echo "waiting for job to start..."
 sleep 3s

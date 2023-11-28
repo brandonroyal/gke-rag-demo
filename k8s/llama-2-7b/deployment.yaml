@@ -18,6 +18,8 @@ spec:
         image: ghcr.io/huggingface/text-generation-inference:1.0.3
         resources:
           limits:
+            cpu: "8"
+            memory: "16Gi"
             nvidia.com/gpu: "1"
         ports:
         - name: server-port
@@ -46,7 +48,16 @@ spec:
            emptyDir:
               medium: Memory
          - name: data
-           hostPath:
-            path: /mnt/stateful_partition/kube-ephemeral-ssd/llama-data
+           ephemeral:
+              volumeClaimTemplate:
+                metadata:
+                  labels:
+                    type: data-volume
+                spec:
+                  accessModes: [ "ReadWriteOnce" ]
+                  storageClassName: "premium-rwo"
+                  resources:
+                    requests:
+                      storage: 200Gi
       nodeSelector:
         cloud.google.com/gke-accelerator: nvidia-l4
