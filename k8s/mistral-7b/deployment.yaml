@@ -11,7 +11,7 @@ spec:
     metadata:
       labels:
         app: mistral-7b
-        server: text-generation-interface
+        server: text-generation-inference
     spec:
       containers:
       - name: mistral-7b

@@ -11,7 +11,7 @@ metadata:
 spec:
   selector:
     matchLabels:
-      server: text-generation-interface
+      server: text-generation-inference
   endpoints:
   - port: server-port
     timeout: 20s

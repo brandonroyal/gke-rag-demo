@@ -45,9 +45,11 @@ spec:
     spec:
       containers:
       - name: chat-app
-        image: gcr.io/broyal-llama-demo/llama-demo/chat-app:0.1.7
+        image: gcr.io/broyal-llama-demo/llama-demo/chat-app:plants-0.1.7
         resources:
           limits:
+            cpu: "4"
+            memory: "8Gi"
             nvidia.com/gpu: "1"
         ports:
         - name: server-port
@@ -56,11 +58,11 @@ spec:
         - name: PGVECTOR_HOST
           value: "postgres-service"
         - name: TGI_HOSTNAME
-          value: "mistral-7b-nf4-service"
+          value: "mistral-7b-service"
+        - name: COLLECTION_NAME
+          value: "k8s_concepts"
         - name: TGI_PORT
           value: "80"
-        - name: HOSTNAME
-          value: "chat-app-service.default.svc.cluster.local"
         - name: MODEL_NAME
           value: "Mistral 7B"
         - name: SENTENCE_TRANSFORMERS_HOME
@@ -68,27 +70,36 @@ spec:
         volumeMounts:
           - mountPath: /data
             name: st-data
-      - name: chat-app-proxy
-        image: nginx
-        ports:
-        - containerPort: 80
-        securityContext:
-          allowPrivilegeEscalation: false
-          #runAsUser: 0
-        volumeMounts:
-            - name: nginx-conf
-              mountPath: /etc/nginx
-              #subPath: nginx.conf
-              readOnly: true
+      # - name: chat-app-proxy
+      #   image: nginx
+      #   ports:
+      #   - containerPort: 80
+      #   securityContext:
+      #     allowPrivilegeEscalation: false
+      #     #runAsUser: 0
+      #   volumeMounts:
+      #       - name: nginx-conf
+      #         mountPath: /etc/nginx
+      #         #subPath: nginx.conf
+      #         readOnly: true
       volumes:
          - name: st-data
-           hostPath:
-            path: /mnt/stateful_partition/kube-ephemeral-ssd/sentence-transformers
-         - name: nginx-conf
-           configMap:
-              name: nginx-conf
-              items:
-                - key: nginx.conf
-                  path: nginx.conf
+           ephemeral:
+              volumeClaimTemplate:
+                metadata:
+                  labels:
+                    type: data-volume
+                spec:
+                  accessModes: [ "ReadWriteOnce" ]
+                  storageClassName: "premium-rwo"
+                  resources:
+                    requests:
+                      storage: 200Gi
+        #  - name: nginx-conf
+        #    configMap:
+        #       name: nginx-conf
+        #       items:
+        #         - key: nginx.conf
+        #           path: nginx.conf
       nodeSelector:
         cloud.google.com/gke-accelerator: nvidia-l4

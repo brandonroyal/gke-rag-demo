@@ -1,5 +1,8 @@
+print('starting chat-app')
+
 import os, json
 import gradio as gr
+import gradio_client
 from langchain.prompts import PromptTemplate
 from langchain.llms import HuggingFacePipeline
 from langchain.llms import HuggingFaceTextGenInference
@@ -9,10 +12,11 @@ from langchain.vectorstores.pgvector import PGVector
 from langchain.callbacks import streaming_stdout
 from huggingface_hub import InferenceClient
 
-
+print('gradio version: {gradio_version}'.format(gradio_version=gr.__version__))
+print('gradio_client version: {gradio_client_version}'.format(gradio_client_version=gradio_client.__version__))
 # url = "http://{hostname}:{port}".format(hostname=os.environ.get("HOSTNAME"), port=os.environ.get("PORT"))
 # client = InferenceClient(model=url)
-print('starting chat-app')
+
 
 def get_embeddings():
     print('start: loading embeddings to {path}', os.getenv("SENTENCE_TRANSFORMERS_HOME"))
@@ -90,7 +94,7 @@ def get_retriever(store, llm, prompt_template):
 
 #vector-store
 store = PGVector.from_existing_index(
-        collection_name='kubernetes_concepts',
+        collection_name=os.getenv("COLLECTION_NAME",'kubernetes_concepts'),
         connection_string=get_connection_string(),
         embedding=get_embeddings(),
     )
@@ -117,39 +121,48 @@ def get_content(docs_data):
         content += "\n" + d["page_content"] + " \n"
     return content
 
-def get_references(docs_data):
+def get_references(docs_data, max_results=1):
     references = ""
-    for d in docs_data:
+    for i, d in enumerate(docs_data):
         references += "\n" + d["source"]
+        if i + 1 == max_results:
+            break
     return references
 
 def inference(message, history):
+    print('inference request with message: {message}'.format(message=message))
     result_docs = store.similarity_search(message)
     print(result_docs)
     docs_data = get_doc_data(result_docs)
     if len(result_docs) > 0:
         # result_docs = result_docs.to_json()
+        print('results count: {count}'.format(count=len(result_docs)))
         context = result_docs[0].to_json()['kwargs']
     else:
+        print('no results returned')
         context = ""
     full_prompt_llama = """[INST] <<SYS>>\nYou are a helpful, respectful and honest assistant who is an expert in explaining Kubernetes concepts. Always answer as helpfully as possible, while being safe.  Use the following context in your response and try to keep your response to 200 words or less.\n
         \n \
         {context} \
         \n
-        \n<</SYS>>\n{message}[/INST]""".format(context=result_docs[0], message=message)
+        \n<</SYS>>\n{message}[/INST]""".format(context=context, message=message)
     full_prompt_mistal = """[INST] You are a helpful, respectful and honest assistant who is an expert in explaining Kubernetes concepts. 
         Always answer as helpfully as possible, while being safe.  Use the following context in your response and try to keep your response to 200 words or less.\n
         \n \
         {context} \
         \n
+        {message} [/INST]""".format(context=context, message=message)
+    plants_full_prompt_mistal = """[INST] You are a garden who has been trained to provide helpful, respectful and honest answers about yourself and garden plants. Always answer as helpfully as possible, while being safe.  Use the following context in your response and try to keep your response to 200 words or less.\n
+        \n \
+        {context} \
         \n
-        {message} [/INST]""".format(context=result_docs[0], message=message)
+        {message} [/INST]""".format(context=context, message=message)
     
     print(full_prompt_mistal)
     partial_message = ""
-    for token in llm_client.text_generation(full_prompt_mistal, max_new_tokens=400, stream=True):
+    for token in llm_client.text_generation(plants_full_prompt_mistal, max_new_tokens=400, stream=True):
         partial_message += token
-        yield partial_message + "\n\n references:{reference_url}".format(reference_url=get_references([docs_data[0]]))
+        yield partial_message + "\n\n references:{reference_url}".format(reference_url=get_references(docs_data))
 # def retrieve_from_chain(message, history):
 #     partial_message = "" #TODO: add context (vector) references to the end
 #     for token in llm.run(message):
@@ -166,4 +179,4 @@ gr.ChatInterface(
     retry_btn="Retry",
     undo_btn="Undo",
     clear_btn="Clear",
-).queue().launch(share=True,server_port=7860)
+).queue().launch(share=False,server_port=7860)

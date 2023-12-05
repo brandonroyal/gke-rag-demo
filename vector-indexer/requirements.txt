@@ -3,5 +3,4 @@ pgvector
 beautifulsoup4
 sentence_transformers
 psycopg2-binary
-google
 google-cloud-pubsub

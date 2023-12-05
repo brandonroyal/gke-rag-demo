@@ -1,7 +1,7 @@
 print('starting vector indexer...')
 
 import ast
-import os, json, io
+import os, json, sys
 import langchain
 from contextlib import redirect_stdout
 from langchain.document_loaders import WebBaseLoader
@@ -15,7 +15,7 @@ print('langchain: {version}'.format(version=langchain.__version__))
 
 PROJECT_ID = 'broyal-llama-demo'
 if os.getenv("DEBUG"):
-    f = open("./.pubsub-svc/pubsub-svc.json", "r")
+    f = open("../.pubsub-svc/pubsub-svc.json", "r")
     secret = json.loads(f.read())
 else:
     f = open("/etc/secret-volume/pubsub-svc.json", "r")
@@ -43,8 +43,7 @@ def load_embeddings():
     print('start: loading embeddings')
     model_name = "sentence-transformers/all-mpnet-base-v2"
     model_kwargs = {"device":"cpu"} # use {"device":"cuda"} for distributed embeddings
-    with redirect_stdout(io.StringIO()) as f:
-      return HuggingFaceEmbeddings(model_name=model_name, model_kwargs=model_kwargs)
+    return HuggingFaceEmbeddings(model_name=model_name, model_kwargs=model_kwargs)
 
 def test_connection():
   import socket
@@ -106,3 +105,4 @@ while True:
   )
 
 print('🏁 No more documents left in the queue. Shutting down...')
+sys.exit() # adding to force exit code 0 when successfully shutting down

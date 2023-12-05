@@ -1,27 +1,31 @@
-# gcr.io/broyal-llama-demo/llama-demo/indexer
-
-apiVersion: batch/v1
-kind: Job
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  name: indexer-job
-  labels:
-    job: "indexer"
+  name: indexer
 spec:
+  selector:
+    matchLabels:
+      app: indexer
   template:
+    metadata:
+      labels:
+        app: indexer
     spec:
       containers:
-      - name: indexer-job
-        image: gcr.io/broyal-llama-demo/llama-demo/indexer:0.1.9
+      - name: indexer
+        image: gcr.io/broyal-llama-demo/llama-demo/indexer:0.1.10
         resources:
           limits:
+            cpu: "4"
+            memory: "8Gi"
             nvidia.com/gpu: "1"
         env:
           - name: PGVECTOR_HOST
             value: "postgres-service"
           - name: PUBSUB_SUBSCRIPTION
-            value: "kubernetes_concepts-2"
+            value: "k8s_concepts_subscription"
           - name: COLLECTION_NAME
-            value: "kubernetes_concepts-2"
+            value: "k8s_concepts"
         volumeMounts:
         - name: secret-volume
           readOnly: true
@@ -33,8 +37,5 @@ spec:
             items:
             - key: pubsub-svc.json
               path: pubsub-svc.json
-      restartPolicy: OnFailure
       nodeSelector:
         cloud.google.com/gke-accelerator: nvidia-l4
-      
-  parallelism: 3

@@ -3,9 +3,9 @@ kubectl apply -f ./k8s/indexer-job
 echo "---"
 echo "waiting for job to start..."
 sleep 3s
-kubectl get job/indexer-job -ojson | jq ".status.active"
+# kubectl get job/indexer-job -ojson | jq ".status.active"
 kubectl logs job/indexer-job --all-containers=true -f
-kubectl logs -l job=indexer -f
+# kubectl logs -l job=indexer -f
 # kubectl get job/indexer-job -ojson | jq ".status.active"
 # while [ $(kubectl get job/indexer-job -ojson | jq ".status.active") -le 1 ]
 # do

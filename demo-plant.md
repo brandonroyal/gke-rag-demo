@@ -1,15 +1,10 @@
 # Scaled Inference and RAG with Open LLMs
 Llama-2 is a powerful open source language model that can be fine-tuned on your own custom dataset to perform a variety of tasks, such as text generation, translation, and summarization. Combined with Google Kubernetes (GKE), the most scalable Kubernetes platform for running large language models (LLMs) you can unlock the open source AI innovations with scalability, reliability, and ease of management.
 
-## Demo Steps
+## Test in Swagger Inferface
 
-1. Show GKE Console.  Show Llama 13B and Mistral 7B workloads
 
-2. Show Llama 13B YAML and Mistral 7B YAML
 
-3. Test a Prompt in the TGI UI
-
-4. Walk through local [notebook](./notebook.ipynb)
 
 
 ## Demo Setup
@@ -39,40 +34,50 @@ gcloud container clusters create-auto $CLUSTER_NAME \
     --cluster-version $VERSION
 ```
 
-Authenticate
+<!-- Create and connect to VPC peering for AlloyDB in default VPC
 ```bash
-gcloud container clusters get-credentials $CLUSTER_NAME --region $REGION
-```
-
-Install Custom Metrics Adapter
-```bash
-kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/k8s-stackdriver/master/custom-metrics-stackdriver-adapter/deploy/production/adapter_new_resource_model.yaml
-```
-
-Create service account for to enable custom pubsub metrics
-```bash
-gcloud iam service-accounts create custom-metrics-viewer
+gcloud compute addresses create google-managed-services-default \
+    --global \
+    --purpose=VPC_PEERING \
+    --prefix-length=16 \
+    --description="peering range for Google" \
+    --network=default
 ```
 
 ```bash
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-    --member "serviceAccount:custom-metrics-viewer@$PROJECT_ID.iam.gserviceaccount.com" \
-    --role "roles/monitoring.viewer"
+gcloud services vpc-peerings connect \
+    --service=servicenetworking.googleapis.com \
+    --ranges=google-managed-services-default \
+    --network=default
 ```
 
+Create AlloyDB cluster:
 ```bash
-gcloud iam service-accounts add-iam-policy-binding --role \
-  roles/iam.workloadIdentityUser --member \
-  "serviceAccount:$PROJECT_ID.svc.id.goog[custom-metrics/custom-metrics-stackdriver-adapter]" \
-  custom-metrics-viewer@$PROJECT_ID.iam.gserviceaccount.com
+gcloud alloydb clusters create db-cluster \
+    --password=$DB_PASSWORD \
+    --network=default \
+    --region=$REGION \
+    --project=$PROJECT_ID \
+    --allocated-ip-range-name=google-managed-services-default
 ```
 
-Annotate custom metrics adapter service account with custom-metrics-viewer service account
+Create AlloyDB instance:
 ```bash
-kubectl annotate serviceaccount --namespace custom-metrics \
-  custom-metrics-stackdriver-adapter \
-  iam.gke.io/gcp-service-account=custom-metrics-viewer@$PROJECT_ID.iam.gserviceaccount.com
+gcloud alloydb instances create vector-db \
+    --instance-type=PRIMARY \
+    --cpu-count=2 \
+    --region=$REGION \
+    --cluster=db-cluster \
+    --project=$PROJECT_ID
 ```
+
+Get the AlloyDB instance IP
+```bash
+gcloud alloydb instances describe vector-db \
+ --region=$REGION \
+ --cluster=db-cluster \
+ --project=$PROJECT_ID
+``` -->
 
 ### Deploy Models using Text Generation Inference
 
@@ -147,7 +152,7 @@ llama-2-13b
 mistral-7b
 ```javascript
 {
-  "inputs": "[INST] You are a helpful, respectful and honest assistant who is an expert in explaining Kubernetes concepts. Always answer as helpfully as possible, while being safe.  Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. If a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct.  Try to keep your response to 100 words or less. What is a deployment?[/INST]",
+  "inputs": "[INST]  You are a garden who has been trained to provide helpful, respectful and honest answers about yourself and garden plants. Always answer as helpfully as possible, while being safe.  Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. If a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct.  Try to keep your response to 100 words or less. When should I plant asparagus?[/INST]",
   "parameters": {
     "best_of": 1,
     "do_sample": true,
@@ -165,43 +170,10 @@ mistral-7b
 }
 ```
 
-### Create Cloud Pubsub Topic and Subscription for documents
-```bash
-gcloud pubsub topics create k8s_concepts
-```
-
-```bash
-gcloud pubsub subscriptions create k8s_concepts_subscription --topic k8s_concepts
-```
-
-### Deploy Postgres, Indexer and Demo Chat App
-Create service account to interact with pubsub topic
-```bash
-gcloud iam service-accounts create pubsub
-```
-
-```bash
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-    --member "serviceAccount:pubsub@$PROJECT_ID.iam.gserviceaccount.com" \
-    --role "roles/pubsub.editor"
-```
-
-Download service account key
-```bash
-gcloud iam service-accounts keys create ./.pubsub-svc/pubsub-svc.json \
-    --iam-account=pubsub@$PROJECT_ID.iam.gserviceaccount.com
-```
-
-Create k8s secret from service account key
-```bash
-kubectl create secret generic pubsub-svc --from-file=./.pubsub-svc/pubsub-svc.json
-```
-
-
+### Deploy Postgres and Demo Chat App
 Deploy Postgres with pgvector
 ```bash
 kubectl apply -f k8s/postgres/
-kubectl apply -f k8s/indexer/
 kubectl apply -f k8s/chat-app/
 ```
 
@@ -220,8 +192,18 @@ In a separate tab, proxy the connection to postgres
 kubectl port-forward postgres 5432:5432
 ```
 
+### Load grounded data into Cloud Pubsub
+```bash
+gcloud pubsub
+```
+
+### 
+```bash
+kubectl create secret generic pubsub-svc --from-file=./.pubsub-svc/pubsub-svc.json
+```
+
 
 ## Appendix
 
 ### Credits
-* Sam Stoelinga
+* Sam Stolinga (sp?)

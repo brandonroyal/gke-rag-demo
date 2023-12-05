@@ -11,7 +11,7 @@ spec:
     metadata:
       labels:
         app: llama-2-13b
-        server: text-generation-interface
+        server: text-generation-inference
     spec:
       containers:
       - name: llama-2-13b
