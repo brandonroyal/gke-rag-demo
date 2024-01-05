@@ -11,11 +11,11 @@ spec:
        name: pubsub.googleapis.com|subscription|num_undelivered_messages
        selector:
          matchLabels:
-           resource.labels.subscription_id: plants-2-subscription
+           resource.labels.subscription_id: k8s_concepts_subscription
            resource.labels.project_id: broyal-llama-demo
       target:
         type: AverageValue
-        averageValue: "100"
+        averageValue: "25"
     type: External
   scaleTargetRef:
     apiVersion: apps/v1

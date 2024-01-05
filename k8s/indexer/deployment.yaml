@@ -6,6 +6,8 @@ spec:
   selector:
     matchLabels:
       app: indexer
+  strategy:
+    type: Recreate
   template:
     metadata:
       labels:
@@ -26,10 +28,14 @@ spec:
             value: "k8s_concepts_subscription"
           - name: COLLECTION_NAME
             value: "k8s_concepts"
+          - name: HF_HOME
+            value: /data
         volumeMounts:
         - name: secret-volume
           readOnly: true
           mountPath: "/etc/secret-volume"
+        - mountPath: /data
+          name: data
       volumes:
         - name: secret-volume
           secret:
@@ -37,5 +43,17 @@ spec:
             items:
             - key: pubsub-svc.json
               path: pubsub-svc.json
+        - name: data
+          ephemeral:
+            volumeClaimTemplate:
+              metadata:
+                labels:
+                  type: data-volume
+              spec:
+                accessModes: [ "ReadWriteOnce" ]
+                storageClassName: "premium-rwo"
+                resources:
+                  requests:
+                    storage: 200Gi
       nodeSelector:
         cloud.google.com/gke-accelerator: nvidia-l4

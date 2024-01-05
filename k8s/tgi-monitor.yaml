@@ -7,13 +7,12 @@ apiVersion: monitoring.googleapis.com/v1
 kind: PodMonitoring
 metadata:
   name: tgi-monitor
-  namespace: ml-monitoring
 spec:
   selector:
     matchLabels:
       server: text-generation-inference
   endpoints:
-  - port: server-port
+  - port: 8080
     timeout: 20s
     path: /metrics
     scheme: http

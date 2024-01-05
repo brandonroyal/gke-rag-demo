@@ -80,7 +80,7 @@ Hugging Face requires authentication to download the [Llama-2-70b-chat-hf](https
 
 You can get your access token from [huggingface.com > Settings > Access Tokens](https://huggingface.co/settings/tokens). Afterwards, set your HuggingFace token as an environment variable:
 ```bash
-export HF_TOKEN=<paste-your-own-token>
+export HF_TOKEN=$(cat ./hf-token.txt)
 ```
 
 Create a Secret to store your HuggingFace token which will be used by the K8s job:

@@ -1,36 +1,33 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mistral-7b
+  name: vllm-mistral-7b
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: mistral-7b
+      app: vllm-mistral-7b
+  strategy:
+    type: Recreate
   template:
     metadata:
       labels:
-        app: mistral-7b
-        server: text-generation-inference
+        app: vllm-mistral-7b
     spec:
       containers:
-      - name: mistral-7b
-        image: ghcr.io/huggingface/text-generation-inference:1.1.0
+      - name: vllm-mistral-7b
+        image: vllm/vllm-openai:v0.2.3
+        command: ["python3", "-m", "vllm.entrypoints.openai.api_server", "--model", "mistralai/Mistral-7B-Instruct-v0.1", "--chat-template", "{{ bos_token }}{% for message in messages %}{% if (message['role'] == 'user') != (loop.index0 % 2 == 0) %}{{ raise_exception('Conversation roles must alternate user/assistant/user/assistant/...') }}{% endif %}{% if message['role'] == 'user' %}{{ '[INST] ' + message['content'] + ' [/INST]' }}{% elif message['role'] == 'assistant' %}{{ message['content'] + eos_token + ' ' }}{% else %}{{ raise_exception('Only user and assistant roles are supported!') }}{% endif %}{% endfor %}"]
         resources:
           limits:
             cpu: "8"
-            memory: "16Gi"
+            memory: "32Gi"
             nvidia.com/gpu: "1"
         ports:
-        - name: server-port
-          containerPort: 8080
+        - containerPort: 8000
         env:
-        - name: MODEL_ID
-          value: mistralai/Mistral-7B-Instruct-v0.1
-        - name: NUM_SHARD
-          value: "1"
-        - name: PORT 
-          value: "8080"
+        - name: HF_HOME
+          value: /data
         - name: HUGGING_FACE_HUB_TOKEN
           valueFrom:
             secretKeyRef:
@@ -59,3 +56,4 @@ spec:
                       storage: 200Gi
       nodeSelector:
         cloud.google.com/gke-accelerator: nvidia-l4
+      

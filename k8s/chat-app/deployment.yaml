@@ -38,6 +38,8 @@ spec:
   selector:
     matchLabels:
       app: chat-app
+  strategy:
+    type: Recreate
   template:
     metadata:
       labels:
@@ -45,7 +47,7 @@ spec:
     spec:
       containers:
       - name: chat-app
-        image: gcr.io/broyal-llama-demo/llama-demo/chat-app:plants-0.1.7
+        image: gcr.io/broyal-llama-demo/llama-demo/chat-app:0.1.11
         resources:
           limits:
             cpu: "4"
@@ -67,9 +69,14 @@ spec:
           value: "Mistral 7B"
         - name: SENTENCE_TRANSFORMERS_HOME
           value: "/data"
+        - name: PUBSUB_SUBSCRIPTION
+          value: "k8s_concepts_subscription"
         volumeMounts:
           - mountPath: /data
             name: st-data
+          - name: secret-volume
+            readOnly: true
+            mountPath: "/etc/secret-volume"
       # - name: chat-app-proxy
       #   image: nginx
       #   ports:
@@ -95,6 +102,12 @@ spec:
                   resources:
                     requests:
                       storage: 200Gi
+         - name: secret-volume
+           secret:
+              secretName: pubsub-svc
+              items:
+              - key: pubsub-svc.json
+                path: pubsub-svc.json
         #  - name: nginx-conf
         #    configMap:
         #       name: nginx-conf
