@@ -31,7 +31,8 @@ export PROJECT_ID=$(gcloud config get project)
 
 Create a GKE Autopilot cluster:
 ```bash
-VERSION="1.28.3-gke.1203000"
+# VERSION="1.28.3-gke.1203000"
+VERSION="1.28.6-gke.1369000"
 CHANNEL="rapid"
 CLUSTER_NAME=l4-demo
 gcloud container clusters create-auto $CLUSTER_NAME \
