@@ -1,34 +1,4 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: nginx-conf
-data:
-  nginx.conf: |-
-    user nginx;
-    worker_processes  10;
-    events {
-      worker_connections  10240;
-    }
-    http {
-      server {
-          listen       80;
-          server_name  localhost;
-          location / {
-            proxy_pass          http://localhost:7860;
-            proxy_set_header    Host              $host;
-            proxy_set_header    X-Real-IP         $remote_addr;
-            proxy_set_header    X-Forwarded-For   $proxy_add_x_forwarded_for;
-            proxy_set_header    X-Client-Verify   SUCCESS;
-            proxy_set_header    X-Client-DN       $ssl_client_s_dn;
-            proxy_set_header    X-SSL-Subject     $ssl_client_s_dn;
-            proxy_set_header    X-SSL-Issuer      $ssl_client_i_dn;
-            proxy_set_header    X-Forwarded-Proto http;
-            proxy_read_timeout 1800;
-            proxy_connect_timeout 1800;
-        }
-      }
-    }
----
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -60,13 +30,13 @@ spec:
         - name: PGVECTOR_HOST
           value: "postgres-service"
         - name: TGI_HOSTNAME
-          value: "mistral-7b-service"
+          value: "gemma-tgi-service"
         - name: COLLECTION_NAME
           value: "k8s_concepts"
         - name: TGI_PORT
           value: "80"
         - name: MODEL_NAME
-          value: "Mistral 7B"
+          value: "Gemma 7B"
         - name: SENTENCE_TRANSFORMERS_HOME
           value: "/data"
         - name: PUBSUB_SUBSCRIPTION
@@ -77,18 +47,6 @@ spec:
           - name: secret-volume
             readOnly: true
             mountPath: "/etc/secret-volume"
-      # - name: chat-app-proxy
-      #   image: nginx
-      #   ports:
-      #   - containerPort: 80
-      #   securityContext:
-      #     allowPrivilegeEscalation: false
-      #     #runAsUser: 0
-      #   volumeMounts:
-      #       - name: nginx-conf
-      #         mountPath: /etc/nginx
-      #         #subPath: nginx.conf
-      #         readOnly: true
       volumes:
          - name: st-data
            ephemeral:
@@ -108,11 +66,5 @@ spec:
               items:
               - key: pubsub-svc.json
                 path: pubsub-svc.json
-        #  - name: nginx-conf
-        #    configMap:
-        #       name: nginx-conf
-        #       items:
-        #         - key: nginx.conf
-        #           path: nginx.conf
       nodeSelector:
         cloud.google.com/gke-accelerator: nvidia-l4
